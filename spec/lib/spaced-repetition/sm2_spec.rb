@@ -15,7 +15,7 @@ describe SuperMemo::SM2 do
       t.check_spaced_repetition_methods
     end
 
-    it 'should raise DBC exception if class including is missing fields' do
+    it 'should raise exception if class including is missing fields' do
       class Temp2 
         include SuperMemo::SM2
       end
@@ -23,7 +23,7 @@ describe SuperMemo::SM2 do
 
       lambda {
         t.check_spaced_repetition_methods
-      }.should raise_error(DBC::AssertconditionException)
+      }.should raise_error(NoMethodError)
     end
 
   end
@@ -31,7 +31,7 @@ describe SuperMemo::SM2 do
   describe 'exclude mixin' do
     
     before :each do
-      @card = {
+      @card = ostructify({
         :easiness_factor => nil, 
         :number_repetitions => nil, 
         :quality_of_last_recall => nil,
@@ -40,14 +40,14 @@ describe SuperMemo::SM2 do
         :last_studied => nil,
         :question => "Who is the most awesome of them all?",
         :answer => 'Me!'
-      }.ostructify
+      })
 
       @card.extend SuperMemo::SM2
       @card.reset_spaced_repetition_data
     end
     
-    it 'should raise DBC exception if class extended is missing fields' do
-      lambda { nil.extend SuperMemo::SM2 }.should raise_error(DBC::AssertconditionException)
+    it 'should raise exception if class extended is missing fields' do
+      lambda { nil.extend SuperMemo::SM2 }.should raise_error(NoMethodError)
     end
     
     it 'should initialize values' do
@@ -71,6 +71,7 @@ describe SuperMemo::SM2 do
 
     it 'should schedule next repetition for 6 days if repetition_interval = 1 and quality_of_last_recall = 4' do
       @card.process_recall_result(4)
+      @card.last_studied = Date.today - 1
       @card.process_recall_result(4)
       
       @card.number_repetitions.should == 2
@@ -102,9 +103,11 @@ describe SuperMemo::SM2 do
     it 'should require repeating items that scored 3' do
       @card.process_recall_result(3)
       @card.next_repetition.should == Date.today
+      @card.last_studied = Date.today - 1
 
       @card.process_recall_result(3)
       @card.next_repetition.should == Date.today
+      @card.last_studied = Date.today - 1
 
       @card.process_recall_result(4)
       @card.next_repetition.should == Date.today + 1
